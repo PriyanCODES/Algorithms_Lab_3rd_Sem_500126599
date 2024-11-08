@@ -1,0 +1,78 @@
+#include <stdio.h>
+#include <stdlib.h>
+struct Node {
+    int level;       
+    int profit;     
+    int weight;      
+    float bound;     
+};
+int max(int a, int b) {
+    return (a > b) ? a : b;
+}
+float bound(struct Node u, int n, int capacity, int weights[], int profits[]) {
+    if (u.weight >= capacity) return 0;  
+    float profit_bound = u.profit;
+    int j = u.level + 1;
+    int total_weight = u.weight;
+    while (j < n && total_weight + weights[j] <= capacity) {
+        total_weight += weights[j];
+        profit_bound += profits[j];
+        j++;
+    }
+    if (j < n) {
+        profit_bound += (capacity - total_weight) * (float)profits[j] / weights[j];
+    }
+    return profit_bound;
+}
+int knapsack(int capacity, int weights[], int profits[], int n) {
+    for (int i = 0; i < n - 1; i++) {
+        for (int j = i + 1; j < n; j++) {
+            if ((float)profits[i] / weights[i] < (float)profits[j] / weights[j]) {
+                int temp = profits[i];
+                profits[i] = profits[j];
+                profits[j] = temp;
+                temp = weights[i];
+                weights[i] = weights[j];
+                weights[j] = temp;
+            }
+        }
+    }
+    struct Node u, v;
+    u.level = -1;
+    u.profit = 0;
+    u.weight = 0;
+    int maxProfit = 0;
+    struct Node queue[1000];
+    int front = 0, rear = 0;
+    queue[rear++] = u;  
+    while (front < rear) {
+        u = queue[front++];  
+        if (u.level == n - 1) continue;
+        v.level = u.level + 1;
+        v.weight = u.weight + weights[v.level];
+        v.profit = u.profit + profits[v.level];
+        if (v.weight <= capacity && v.profit > maxProfit) {
+            maxProfit = v.profit;
+        }
+        v.bound = bound(v, n, capacity, weights, profits);
+        if (v.bound > maxProfit) {
+            queue[rear++] = v;
+        }
+        v.weight = u.weight;
+        v.profit = u.profit;
+        v.bound = bound(v, n, capacity, weights, profits);
+        if (v.bound > maxProfit) {
+            queue[rear++] = v;
+        }
+    }
+    return maxProfit;
+}
+int main() {
+    int profits[] = {60, 100, 120, 150, 135};  
+    int weights[] = {10, 20, 30, 45, 25};   
+    int capacity = 60;               
+    int n = sizeof(profits) / sizeof(profits[0]);  
+    int maxProfit = knapsack(capacity, weights, profits, n);
+    printf("Maximum profit in Knapsack = %d\n", maxProfit);
+    return 0;
+}
